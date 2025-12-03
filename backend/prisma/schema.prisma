@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/**
+ * ================= Model =================
+ */
+
+// Người dùng
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  fullName     String?
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  accounts      Account[]
+  budgets       Budget[]
+  loans         Loan[]
+  settings      Setting[]
+  notifications Notification[]
+}
+
+// Tài khoản của user (có thể nhiều account: cash, bank, wallet...)
+model Account {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  name      String
+  type      AccountType
+  balance   Decimal  @default(0) @db.Decimal(20,2)
+  currency  String   @default("VND")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions          Transaction[]
+  recurringTransactions RecurringTransaction[]
+}
+
+// Danh mục chi tiêu/thu nhập
+model Category {
+  id        Int    @id @default(autoincrement())
+  name      String
+  type      CategoryType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions          Transaction[]
+  recurringTransactions RecurringTransaction[]
+  budgets               Budget[]
+}
+
+// Giao dịch
+model Transaction {
+  id            Int      @id @default(autoincrement())
+  account       Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId     Int
+  category      Category @relation(fields: [categoryId], references: [id])
+  categoryId    Int
+  amount        Decimal  @db.Decimal(20,2)
+  description   String?
+  executionDate DateTime // Ngày thực hiện giao dịch
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Giao dịch định kỳ
+model RecurringTransaction {
+  id          Int      @id @default(autoincrement())
+  account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId   Int
+  category    Category @relation(fields: [categoryId], references: [id])
+  categoryId  Int
+  amount      Decimal  @db.Decimal(20,2)
+  description String?
+  frequency   Frequency
+  nextDate    DateTime
+  endDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Ngân sách
+model Budget {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId Int
+  amount     Decimal  @db.Decimal(20,2)
+  startDate  DateTime
+  endDate    DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// Khoản vay
+model Loan {
+  id           Int    @id @default(autoincrement())
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       Int
+  lender       String?
+  principal    Decimal @db.Decimal(20,2)
+  interestRate Decimal?
+  startDate    DateTime?
+  endDate      DateTime?
+  status       LoanStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+// Cấu hình của user
+model Setting {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  key       String
+  value     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Thông báo nhắc nhở
+model Notification {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  notifyAt  DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/**
+ * ================= Enum =================
+ */
+
+enum AccountType {
+  CASH                // Tiền mặt
+  BANK                // Tài khoản ngân hàng
+  E_WALLET            // Ví điện tử
+  INVESTMENT          // Tài khoản đầu tư (cổ phiếu, chứng khoán, quỹ…)
+  CREDIT_CARD         // Thẻ tín dụng
+  CRYPTO_WALLET       // Tiền điện tử
+  OTHER               // Các loại khác
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum Frequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum LoanStatus {
+  ACTIVE
+  PAID_OFF
+  DEFAULTED
+}

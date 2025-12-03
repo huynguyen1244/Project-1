@@ -1,0 +1,26 @@
+- Cập nhật lại Prisma
+Bước 1: Sửa schema.prisma
+Bước 2: Chạy migration để cập nhật database:
+npx prisma migrate dev --name update_schema
+Bước 3: Generate lại Prisma Client:
+npx prisma generate
+
+- Thay đổi database
+localhost: mysql://root:123456@localhost:3306/{database-name}
+
+- Luồng xử lý: Client gửi request → Middleware → Guard → Pipes → Controller → Service → Prisma → Response
+
+- Danh sách exception:  throw new {exception}('{message}');  from '@nestjs/common'
+Tên                             Mã      Ý nghĩa                                 Message
+BadRequestException             400     Request không hợp lệ                    Validate input fail
+UnauthorizedException           401     Chưa đăng nhập / token sai              JWT, login
+ForbiddenException              403     Không có quyền truy cập                 Không đủ role / permission
+NotFoundException               404     Không tìm thấy dữ liệu                  Query DB không có kết quả
+ConflictException               409     Conflict dữ liệu                        Email đã tồn tại
+GoneException                   410     Resource đã không còn nữa               Link expired
+PayloadTooLargeException	    413	    Payload quá lớn	                        Upload file lớn
+UnsupportedMediaTypeException	415	    Sai format dữ liệu	                    Upload sai định dạng
+UnprocessableEntityException	422	    Payload đúng format nhưng sai logic	    Validate business logic
+InternalServerErrorException	500	    Lỗi hệ thống	                        Không xác định
+NotImplementedException	        501	    Chưa implement	                        Feature đang làm
+ServiceUnavailableException	    503	    Service đang down	                    Không kết nối DB/external API
