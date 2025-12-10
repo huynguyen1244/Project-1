@@ -14,45 +14,35 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
-  ) {}
+  ) { }
 
   async register(dto: RegisterDto) {
     const hash = await bcrypt.hash(dto.password, 10);
 
-    const user = await this.prisma.users.create({
+    const user = await this.prisma.user.create({
       data: {
         email: dto.email,
         username: dto.username,
-        password_hash: hash,
-        phone: dto.phone,
-        role: 'user',
+        passwordHash: hash,
       },
     });
 
-    const tokens = await this.generateTokens(
-      Number(user.id),
-      user.email,
-      user.role,
-    );
+    const tokens = await this.generateTokens(Number(user.id), user.email);
     await this.updateRefreshToken(Number(user.id), tokens.refresh_token);
 
     return { user, ...tokens };
   }
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.users.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
 
-    if (!user || !(await bcrypt.compare(dto.password, user.password_hash))) {
+    if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const tokens = await this.generateTokens(
-      Number(user.id),
-      user.email,
-      user.role,
-    );
+    const tokens = await this.generateTokens(Number(user.id), user.email);
     await this.updateRefreshToken(Number(user.id), tokens.refresh_token);
 
     return { user, ...tokens };
@@ -66,71 +56,36 @@ export class AuthService {
       secret: process.env.JWT_REFRESH_SECRET,
     });
 
-    const user = await this.prisma.users.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
     });
 
-    if (!user || !user.refresh_token)
+    if (!user || !user.refreshToken)
       throw new ForbiddenException('Invalid token');
 
-    const valid = await bcrypt.compare(refreshToken, user.refresh_token);
+    const valid = await bcrypt.compare(refreshToken, user.refreshToken);
     if (!valid) throw new ForbiddenException('Token mismatch');
 
-    const tokens = await this.generateTokens(
-      Number(user.id),
-      user.email,
-      user.role,
-    );
+    const tokens = await this.generateTokens(Number(user.id), user.email);
     await this.updateRefreshToken(Number(user.id), tokens.refresh_token);
 
     return tokens;
   }
 
   async logout(userId: number) {
-    await this.prisma.users.update({
+    await this.prisma.user.update({
       where: { id: userId },
-      data: { refresh_token: null },
+      data: { refreshToken: null },
     });
 
     return { message: 'Logged out successfully' };
   }
 
-  private otpStore = new Map<string, string>(); // email -> OTP
-
-  // Send OTP
-
-  async sendOtp(email: string) {
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    this.otpStore.set(email, otp);
-
-    // OTP chỉ sống 5 phút
-    setTimeout(() => this.otpStore.delete(email), 5 * 60 * 1000);
-
-    console.log(`OTP for ${email}: ${otp}`);
-    // Gửi OTP qua email/SMS
-  }
-
-  async verifyOtp(email: string, otp: string) {
-    const storedOtp = this.otpStore.get(email);
-    if (!storedOtp || storedOtp !== otp) {
-      throw new UnauthorizedException('OTP invalid or expired');
-    }
-
-    this.otpStore.delete(email);
-
-    // Cập nhật trạng thái đã xác thực
-    await this.prisma.users.update({
-      where: { email },
-      data: { isVerified: true },
-    });
-
-    return { message: 'OTP verified successfully' };
-  }
 
   // ===== Helpers =====
 
-  async generateTokens(userId: number, email: string, role: string) {
-    const payload = { sub: userId, email, role };
+  async generateTokens(userId: number, email: string) {
+    const payload = { sub: userId, email };
 
     const access_token = await this.jwt.signAsync(payload, {
       secret: process.env.JWT_SECRET,
@@ -147,9 +102,9 @@ export class AuthService {
 
   async updateRefreshToken(userId: number, refreshToken: string) {
     const hash = await bcrypt.hash(refreshToken, 10);
-    await this.prisma.users.update({
+    await this.prisma.user.update({
       where: { id: userId },
-      data: { refresh_token: hash },
+      data: { refreshToken: hash },
     });
   }
 }

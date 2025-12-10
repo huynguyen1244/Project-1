@@ -31,16 +31,6 @@ export class AuthController {
     return res.json(data);
   }
 
-  @Post('send-otp')
-  sendOtp(@Body() dto: SendOtpDto) {
-    return this.authService.sendOtp(dto.email);
-  }
-
-  @Post('verify-otp')
-  verifyOtp(@Body() dto: VerifyOtpDto) {
-    return this.authService.verifyOtp(dto.email, dto.otp);
-  }
-
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   async logout(@Req() req: any, @Res() res: Response) {
