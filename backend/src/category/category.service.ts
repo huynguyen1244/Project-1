@@ -1,26 +1,72 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { CategoryType } from '@prisma/client';
 
 @Injectable()
 export class CategoryService {
-  create(createCategoryDto: CreateCategoryDto) {
-    return 'This action adds a new category';
+  constructor(private prisma: PrismaService) { }
+
+  // Tạo category mới
+  async create(dto: CreateCategoryDto) {
+    return await this.prisma.category.create({
+      data: {
+        name: dto.name,
+        type: dto.type,
+      },
+    });
   }
 
-  findAll() {
-    return `This action returns all category`;
+  // Lấy tất cả categories
+  async findAll(type?: CategoryType) {
+    return await this.prisma.category.findMany({
+      where: type ? { type } : undefined,
+      orderBy: { name: 'asc' },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} category`;
+  // Lấy category theo id
+  async findOne(id: number) {
+    const category = await this.prisma.category.findUnique({
+      where: { id },
+    });
+
+    if (!category) {
+      throw new NotFoundException(`Category id ${id} không tồn tại`);
+    }
+
+    return category;
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
+  // Cập nhật category
+  async update(id: number, dto: UpdateCategoryDto) {
+    const category = await this.prisma.category.findUnique({
+      where: { id },
+    });
+
+    if (!category) {
+      throw new NotFoundException(`Category id ${id} không tồn tại`);
+    }
+
+    return await this.prisma.category.update({
+      where: { id },
+      data: dto,
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} category`;
+  // Xóa category
+  async remove(id: number) {
+    const category = await this.prisma.category.findUnique({
+      where: { id },
+    });
+
+    if (!category) {
+      throw new NotFoundException(`Category id ${id} không tồn tại`);
+    }
+
+    await this.prisma.category.delete({ where: { id } });
+
+    return { message: `Category ${id} đã bị xóa` };
   }
 }

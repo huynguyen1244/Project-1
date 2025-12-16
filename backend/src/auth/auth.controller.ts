@@ -8,7 +8,7 @@ import type { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
   @Post('register')
   async register(@Body() dto: RegisterDto, @Res() res: Response) {

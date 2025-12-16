@@ -8,13 +8,12 @@ import {
   Delete,
   UseGuards,
   Req,
-  ParseIntPipe
+  ParseIntPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '@nestjs/passport';
-// import { User } from '../common/decorators/user.decorator';
 
 @Controller('user')
 export class UserController {
@@ -23,45 +22,45 @@ export class UserController {
   // Tạo user (public)
   @Post()
   async create(@Body() dto: CreateUserDto) {
-    return this.userService.create(dto);
+    return await this.userService.create(dto);
   }
 
   // Lấy tất cả user (nếu cần có thể guard lại)
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Get()
   async findAll() {
-    return this.userService.findAll();
+    return await this.userService.findAll();
   }
 
   // Lấy thông tin user hiện tại
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Get('me/info')
   async getProfile(@Req() req) {
-    return this.userService.findOne(req.user.id);
+    return await this.userService.findOne(req.user.userId);
   }
 
   // Lấy user theo id
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.findOne(id);
+    return await this.userService.findOne(id);
   }
 
   // Update user
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateUserDto,
     @Req() req,
   ) {
-    return this.userService.update(id, dto, req.user.id);
+    return await this.userService.update(id, dto, req.user.userId);
   }
 
   // Delete user
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.remove(id);
+    return await this.userService.remove(id);
   }
 }

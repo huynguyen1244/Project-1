@@ -1,34 +1,62 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { RecurringTransactionService } from './recurring-transaction.service';
 import { CreateRecurringTransactionDto } from './dto/create-recurring-transaction.dto';
 import { UpdateRecurringTransactionDto } from './dto/update-recurring-transaction.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { UserId } from '../common/decorators/user.decorator';
 
 @Controller('recurring-transaction')
+@UseGuards(AuthGuard('jwt'))
 export class RecurringTransactionController {
-  constructor(private readonly recurringTransactionService: RecurringTransactionService) {}
+  constructor(
+    private readonly recurringTransactionService: RecurringTransactionService,
+  ) { }
 
   @Post()
-  create(@Body() createRecurringTransactionDto: CreateRecurringTransactionDto) {
-    return this.recurringTransactionService.create(createRecurringTransactionDto);
+  async create(
+    @UserId() userId: number,
+    @Body() dto: CreateRecurringTransactionDto,
+  ) {
+    return await this.recurringTransactionService.create(userId, dto);
   }
 
   @Get()
-  findAll() {
-    return this.recurringTransactionService.findAll();
+  async findAll(@UserId() userId: number) {
+    return await this.recurringTransactionService.findAll(userId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.recurringTransactionService.findOne(+id);
+  async findOne(
+    @UserId() userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.recurringTransactionService.findOne(id, userId);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRecurringTransactionDto: UpdateRecurringTransactionDto) {
-    return this.recurringTransactionService.update(+id, updateRecurringTransactionDto);
+  async update(
+    @UserId() userId: number,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateRecurringTransactionDto,
+  ) {
+    return await this.recurringTransactionService.update(id, userId, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.recurringTransactionService.remove(+id);
+  async remove(
+    @UserId() userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.recurringTransactionService.remove(id, userId);
   }
 }

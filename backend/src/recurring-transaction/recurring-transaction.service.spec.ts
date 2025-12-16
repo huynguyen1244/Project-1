@@ -9,7 +9,9 @@ describe('RecurringTransactionService', () => {
       providers: [RecurringTransactionService],
     }).compile();
 
-    service = module.get<RecurringTransactionService>(RecurringTransactionService);
+    service = module.get<RecurringTransactionService>(
+      RecurringTransactionService,
+    );
   });
 
   it('should be defined', () => {

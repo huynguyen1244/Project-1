@@ -14,7 +14,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
-  ) { }
+  ) {}
 
   async register(dto: RegisterDto) {
     const hash = await bcrypt.hash(dto.password, 10);
@@ -80,7 +80,6 @@ export class AuthService {
 
     return { message: 'Logged out successfully' };
   }
-
 
   // ===== Helpers =====
 

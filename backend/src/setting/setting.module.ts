@@ -9,4 +9,4 @@ import { PrismaModule } from '../database/prisma.module';
   providers: [SettingService],
   exports: [SettingService],
 })
-export class SettingModule { }
+export class SettingModule {}

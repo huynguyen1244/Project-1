@@ -11,7 +11,9 @@ describe('RecurringTransactionController', () => {
       providers: [RecurringTransactionService],
     }).compile();
 
-    controller = module.get<RecurringTransactionController>(RecurringTransactionController);
+    controller = module.get<RecurringTransactionController>(
+      RecurringTransactionController,
+    );
   });
 
   it('should be defined', () => {

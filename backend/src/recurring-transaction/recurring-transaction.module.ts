@@ -9,4 +9,4 @@ import { PrismaModule } from '../database/prisma.module';
   providers: [RecurringTransactionService],
   exports: [RecurringTransactionService],
 })
-export class RecurringTransactionModule { }
+export class RecurringTransactionModule {}

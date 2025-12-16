@@ -1,34 +1,77 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  ParseIntPipe,
+  Query,
+} from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { UserId } from '../common/decorators/user.decorator';
 
 @Controller('notification')
+@UseGuards(AuthGuard('jwt'))
 export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) {}
+  constructor(private readonly notificationService: NotificationService) { }
 
   @Post()
-  create(@Body() createNotificationDto: CreateNotificationDto) {
-    return this.notificationService.create(createNotificationDto);
+  async create(@UserId() userId: number, @Body() dto: CreateNotificationDto) {
+    return await this.notificationService.create(userId, dto);
   }
 
   @Get()
-  findAll() {
-    return this.notificationService.findAll();
+  async findAll(
+    @UserId() userId: number,
+    @Query('unreadOnly') unreadOnly?: string,
+  ) {
+    return await this.notificationService.findAll(
+      userId,
+      unreadOnly === 'true',
+    );
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.notificationService.findOne(+id);
+  async findOne(
+    @UserId() userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.notificationService.findOne(id, userId);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateNotificationDto: UpdateNotificationDto) {
-    return this.notificationService.update(+id, updateNotificationDto);
+  async update(
+    @UserId() userId: number,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateNotificationDto,
+  ) {
+    return await this.notificationService.update(id, userId, dto);
+  }
+
+  @Patch(':id/read')
+  async markAsRead(
+    @UserId() userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.notificationService.markAsRead(id, userId);
+  }
+
+  @Patch('mark-all-read')
+  async markAllAsRead(@UserId() userId: number) {
+    return await this.notificationService.markAllAsRead(userId);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.notificationService.remove(+id);
+  async remove(
+    @UserId() userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.notificationService.remove(id, userId);
   }
 }

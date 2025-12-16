@@ -1,34 +1,72 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  ParseIntPipe,
+  Put,
+} from '@nestjs/common';
 import { SettingService } from './setting.service';
 import { CreateSettingDto } from './dto/create-setting.dto';
 import { UpdateSettingDto } from './dto/update-setting.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { UserId } from '../common/decorators/user.decorator';
 
 @Controller('setting')
+@UseGuards(AuthGuard('jwt'))
 export class SettingController {
-  constructor(private readonly settingService: SettingService) {}
+  constructor(private readonly settingService: SettingService) { }
 
   @Post()
-  create(@Body() createSettingDto: CreateSettingDto) {
-    return this.settingService.create(createSettingDto);
+  async create(@UserId() userId: number, @Body() dto: CreateSettingDto) {
+    return await this.settingService.create(userId, dto);
   }
 
   @Get()
-  findAll() {
-    return this.settingService.findAll();
+  async findAll(@UserId() userId: number) {
+    return await this.settingService.findAll(userId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.settingService.findOne(+id);
+  async findOne(
+    @UserId() userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.settingService.findOne(id, userId);
+  }
+
+  @Get('key/:key')
+  async findByKey(@UserId() userId: number, @Param('key') key: string) {
+    return await this.settingService.findByKey(userId, key);
+  }
+
+  @Put('key/:key')
+  async upsert(
+    @UserId() userId: number,
+    @Param('key') key: string,
+    @Body('value') value: string,
+  ) {
+    return await this.settingService.upsert(userId, key, value);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSettingDto: UpdateSettingDto) {
-    return this.settingService.update(+id, updateSettingDto);
+  async update(
+    @UserId() userId: number,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateSettingDto,
+  ) {
+    return await this.settingService.update(id, userId, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.settingService.remove(+id);
+  async remove(
+    @UserId() userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.settingService.remove(id, userId);
   }
 }

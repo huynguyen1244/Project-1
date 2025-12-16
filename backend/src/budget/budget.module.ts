@@ -9,4 +9,4 @@ import { PrismaModule } from '../database/prisma.module';
   providers: [BudgetService],
   exports: [BudgetService],
 })
-export class BudgetModule { }
+export class BudgetModule {}
