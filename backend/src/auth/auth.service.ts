@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -17,6 +18,15 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
+    // Kiểm tra email đã tồn tại
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('Email đã được sử dụng');
+    }
+
     const hash = await bcrypt.hash(dto.password, 10);
 
     const user = await this.prisma.user.create({
@@ -38,8 +48,16 @@ export class AuthService {
       where: { email: dto.email },
     });
 
-    if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
-      throw new UnauthorizedException('Invalid credentials');
+    if (!user) {
+      throw new UnauthorizedException('Email không tồn tại');
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      dto.password,
+      user.passwordHash,
+    );
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Mật khẩu không đúng');
     }
 
     const tokens = await this.generateTokens(Number(user.id), user.email);
@@ -79,6 +97,25 @@ export class AuthService {
     });
 
     return { message: 'Logged out successfully' };
+  }
+
+  async getMe(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: Number(userId) },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return user;
   }
 
   // ===== Helpers =====

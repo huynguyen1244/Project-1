@@ -2,13 +2,17 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../database/prisma.service';
 import { CreateRecurringTransactionDto } from './dto/create-recurring-transaction.dto';
 import { UpdateRecurringTransactionDto } from './dto/update-recurring-transaction.dto';
 
 @Injectable()
 export class RecurringTransactionService {
+  private readonly logger = new Logger(RecurringTransactionService.name);
+
   constructor(private prisma: PrismaService) { }
 
   // Kiểm tra account thuộc user
@@ -136,5 +140,111 @@ export class RecurringTransactionService {
     await this.prisma.recurringTransaction.delete({ where: { id } });
 
     return { message: `RecurringTransaction ${id} đã bị xóa` };
+  }
+
+  // ==================== CRON JOB ====================
+  // Chạy mỗi phút để xử lý recurring transactions đến hạn
+  // Cron format: giây phút giờ ngày tháng thứ
+  @Cron(CronExpression.EVERY_MINUTE)
+  async processRecurringTransactions() {
+    const now = new Date();
+    this.logger.log(
+      `Processing recurring transactions at ${now.toISOString()}`,
+    );
+
+    try {
+      // Lấy tất cả recurring transactions đến hạn (nextDate <= now)
+      // và chưa hết hạn (endDate null hoặc endDate > now)
+      const dueTransactions = await this.prisma.recurringTransaction.findMany({
+        where: {
+          nextDate: { lte: now },
+          OR: [{ endDate: null }, { endDate: { gte: now } }],
+        },
+        include: {
+          account: true,
+          category: true,
+        },
+      });
+
+      this.logger.log(
+        `Found ${dueTransactions.length} due recurring transactions`,
+      );
+
+      for (const recurring of dueTransactions) {
+        try {
+          // Xác định loại giao dịch (thu nhập hay chi tiêu)
+          const isIncome = recurring.category?.type === 'INCOME';
+          const amount = Number(recurring.amount);
+
+          // Tạo transaction mới
+          await this.prisma.transaction.create({
+            data: {
+              accountId: recurring.accountId,
+              categoryId: recurring.categoryId,
+              amount: recurring.amount,
+              description: `[Tự động] ${recurring.description || recurring.category?.name || 'Giao dịch định kỳ'}`,
+              executionDate: now,
+            },
+          });
+
+          // Cập nhật số dư tài khoản
+          // Thu nhập: cộng tiền, Chi tiêu: trừ tiền
+          await this.prisma.account.update({
+            where: { id: recurring.accountId },
+            data: {
+              balance: isIncome ? { increment: amount } : { decrement: amount },
+            },
+          });
+
+          // Tính ngày tiếp theo dựa trên tần suất
+          const nextDate = this.calculateNextDate(
+            recurring.nextDate,
+            recurring.frequency,
+          );
+
+          // Cập nhật nextDate cho recurring transaction
+          await this.prisma.recurringTransaction.update({
+            where: { id: recurring.id },
+            data: { nextDate },
+          });
+
+          this.logger.log(
+            `Processed recurring transaction ${recurring.id}: ${isIncome ? '+' : '-'}${amount} for account ${recurring.accountId}`,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to process recurring transaction ${recurring.id}: ${error.message}`,
+          );
+        }
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to process recurring transactions: ${error.message} `,
+      );
+    }
+  }
+
+  // Tính ngày tiếp theo dựa trên tần suất
+  private calculateNextDate(currentDate: Date, frequency: string): Date {
+    const next = new Date(currentDate);
+
+    switch (frequency) {
+      case 'DAILY':
+        next.setDate(next.getDate() + 1);
+        break;
+      case 'WEEKLY':
+        next.setDate(next.getDate() + 7);
+        break;
+      case 'MONTHLY':
+        next.setMonth(next.getMonth() + 1);
+        break;
+      case 'YEARLY':
+        next.setFullYear(next.getFullYear() + 1);
+        break;
+      default:
+        next.setMonth(next.getMonth() + 1); // Default to monthly
+    }
+
+    return next;
   }
 }

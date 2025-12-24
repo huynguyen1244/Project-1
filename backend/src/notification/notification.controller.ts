@@ -19,7 +19,7 @@ import { UserId } from '../common/decorators/user.decorator';
 @Controller('notification')
 @UseGuards(AuthGuard('jwt'))
 export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) { }
+  constructor(private readonly notificationService: NotificationService) {}
 
   @Post()
   async create(@UserId() userId: number, @Body() dto: CreateNotificationDto) {

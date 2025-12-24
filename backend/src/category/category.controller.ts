@@ -19,7 +19,7 @@ import { CategoryType } from '@prisma/client';
 @Controller('category')
 @UseGuards(AuthGuard('jwt'))
 export class CategoryController {
-  constructor(private readonly categoryService: CategoryService) { }
+  constructor(private readonly categoryService: CategoryService) {}
 
   @Post()
   async create(@Body() dto: CreateCategoryDto) {

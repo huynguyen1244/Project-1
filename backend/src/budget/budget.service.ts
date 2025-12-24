@@ -5,7 +5,7 @@ import { UpdateBudgetDto } from './dto/update-budget.dto';
 
 @Injectable()
 export class BudgetService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   // Tạo budget mới
   async create(userId: number, dto: CreateBudgetDto) {

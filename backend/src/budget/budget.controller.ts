@@ -18,7 +18,7 @@ import { UserId } from '../common/decorators/user.decorator';
 @Controller('budget')
 @UseGuards(AuthGuard('jwt'))
 export class BudgetController {
-  constructor(private readonly budgetService: BudgetService) { }
+  constructor(private readonly budgetService: BudgetService) {}
 
   @Post()
   async create(@UserId() userId: number, @Body() dto: CreateBudgetDto) {

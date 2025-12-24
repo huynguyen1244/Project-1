@@ -6,7 +6,7 @@ import { LoanStatus } from '@prisma/client';
 
 @Injectable()
 export class LoanService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   // Tạo loan mới
   async create(userId: number, dto: CreateLoanDto) {

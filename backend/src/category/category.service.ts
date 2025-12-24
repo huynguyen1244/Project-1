@@ -6,7 +6,7 @@ import { CategoryType } from '@prisma/client';
 
 @Injectable()
 export class CategoryService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   // Tạo category mới
   async create(dto: CreateCategoryDto) {

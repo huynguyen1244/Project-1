@@ -19,7 +19,7 @@ import { UserId } from '../common/decorators/user.decorator';
 @Controller('setting')
 @UseGuards(AuthGuard('jwt'))
 export class SettingController {
-  constructor(private readonly settingService: SettingService) { }
+  constructor(private readonly settingService: SettingService) {}
 
   @Post()
   async create(@UserId() userId: number, @Body() dto: CreateSettingDto) {

@@ -20,7 +20,7 @@ import { UserId } from '../common/decorators/user.decorator';
 export class RecurringTransactionController {
   constructor(
     private readonly recurringTransactionService: RecurringTransactionService,
-  ) { }
+  ) {}
 
   @Post()
   async create(

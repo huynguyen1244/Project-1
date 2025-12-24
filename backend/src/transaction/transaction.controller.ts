@@ -19,7 +19,7 @@ import { UserId } from '../common/decorators/user.decorator';
 @Controller('transaction')
 @UseGuards(AuthGuard('jwt'))
 export class TransactionController {
-  constructor(private readonly transactionService: TransactionService) { }
+  constructor(private readonly transactionService: TransactionService) {}
 
   @Post()
   async create(@UserId() userId: number, @Body() dto: CreateTransactionDto) {

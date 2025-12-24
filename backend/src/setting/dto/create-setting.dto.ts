@@ -1,11 +1,11 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateSettingDto {
-    @IsNotEmpty()
-    @IsString()
-    key: string;
+  @IsNotEmpty()
+  @IsString()
+  key: string;
 
-    @IsOptional()
-    @IsString()
-    value?: string;
+  @IsOptional()
+  @IsString()
+  value?: string;
 }

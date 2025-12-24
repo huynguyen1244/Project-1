@@ -4,15 +4,20 @@ const prisma = new PrismaClient();
 
 async function main() {
     const categories = [
-        { name: "Salary", type: CategoryType.INCOME },
-        { name: "Bonus", type: CategoryType.INCOME },
-        { name: "Food", type: CategoryType.EXPENSE },
-        { name: "Transport", type: CategoryType.EXPENSE },
-        { name: "Entertainment", type: CategoryType.EXPENSE },
-        { name: "Health", type: CategoryType.EXPENSE },
-        { name: "Shopping", type: CategoryType.EXPENSE },
-        { name: "Utilities", type: CategoryType.EXPENSE },
-        { name: "Others", type: CategoryType.EXPENSE },
+        { name: "Lương", type: CategoryType.INCOME },
+        { name: "Thưởng", type: CategoryType.INCOME },
+        { name: "Đầu tư", type: CategoryType.INCOME },
+        { name: "Thu nhập khác", type: CategoryType.INCOME },
+        { name: "Ăn uống", type: CategoryType.EXPENSE },
+        { name: "Di chuyển", type: CategoryType.EXPENSE },
+        { name: "Giải trí", type: CategoryType.EXPENSE },
+        { name: "Sức khỏe", type: CategoryType.EXPENSE },
+        { name: "Mua sắm", type: CategoryType.EXPENSE },
+        { name: "Hóa đơn & Tiện ích", type: CategoryType.EXPENSE },
+        { name: "Giáo dục", type: CategoryType.EXPENSE },
+        { name: "Du lịch", type: CategoryType.EXPENSE },
+        { name: "Nhà ở", type: CategoryType.EXPENSE },
+        { name: "Chi phí khác", type: CategoryType.EXPENSE },
     ];
 
     for (const cat of categories) {

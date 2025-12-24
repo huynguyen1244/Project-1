@@ -1,25 +1,25 @@
 import {
-    IsBoolean,
-    IsDateString,
-    IsNotEmpty,
-    IsOptional,
-    IsString,
+  IsBoolean,
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
 } from 'class-validator';
 
 export class CreateNotificationDto {
-    @IsNotEmpty()
-    @IsString()
-    title: string;
+  @IsNotEmpty()
+  @IsString()
+  title: string;
 
-    @IsNotEmpty()
-    @IsString()
-    message: string;
+  @IsNotEmpty()
+  @IsString()
+  message: string;
 
-    @IsOptional()
-    @IsBoolean()
-    read?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  read?: boolean;
 
-    @IsNotEmpty()
-    @IsDateString()
-    notifyAt: string;
+  @IsNotEmpty()
+  @IsDateString()
+  notifyAt: string;
 }

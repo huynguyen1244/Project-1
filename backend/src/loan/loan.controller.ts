@@ -20,7 +20,7 @@ import { LoanStatus } from '@prisma/client';
 @Controller('loan')
 @UseGuards(AuthGuard('jwt'))
 export class LoanController {
-  constructor(private readonly loanService: LoanService) { }
+  constructor(private readonly loanService: LoanService) {}
 
   @Post()
   async create(@UserId() userId: number, @Body() dto: CreateLoanDto) {
