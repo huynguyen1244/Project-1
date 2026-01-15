@@ -93,7 +93,7 @@ export default function NotificationDropdown() {
                                     <button
                                         key={notification.id}
                                         onClick={() => markAsRead(notification.id)}
-                                        className={`w-full text-left p-4 transition-colors cursor-pointer group hover:bg-gray-50 dark:hover:bg-gray-800/50 ${!notification.read ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}
+                                        className={`w-full text-left p-4 transition-colors cursor-pointer group hover:bg-gray-50 dark:hover:bg-gray-800/50 ${notification.read ? '' : 'bg-indigo-50/30 dark:bg-indigo-900/10'}`}
                                     >
                                         <div className="flex gap-3">
                                             <div className={`mt-1 w-2 h-2 rounded-full shrink-0 transition-opacity ${notification.read ? 'opacity-0' : 'bg-indigo-600 dark:bg-indigo-400'}`} />
