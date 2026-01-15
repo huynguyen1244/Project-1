@@ -93,6 +93,13 @@ export default function NotificationDropdown() {
                                     <div
                                         key={notification.id}
                                         onClick={() => markAsRead(notification.id)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                markAsRead(notification.id);
+                                            }
+                                        }}
+                                        role="button"
+                                        tabIndex={0}
                                         className={`p-4 transition-colors cursor-pointer group hover:bg-gray-50 dark:hover:bg-gray-800/50 ${!notification.read ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}
                                     >
                                         <div className="flex gap-3">

@@ -212,8 +212,9 @@ export default function RecurringTransactionsPage() {
             {/* Filters */}
             <div className="flex flex-wrap gap-4">
                 <div className="flex items-center gap-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">Danh mục:</label>
+                    <label htmlFor="category-filter" className="text-sm text-gray-600 dark:text-gray-400">Danh mục:</label>
                     <select
+                        id="category-filter"
                         value={filterCategory}
                         onChange={(e) => setFilterCategory(e.target.value)}
                         className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -227,8 +228,9 @@ export default function RecurringTransactionsPage() {
                     </select>
                 </div>
                 <div className="flex items-center gap-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">Tần suất:</label>
+                    <label htmlFor="frequency-filter" className="text-sm text-gray-600 dark:text-gray-400">Tần suất:</label>
                     <select
+                        id="frequency-filter"
                         value={filterFrequency}
                         onChange={(e) => setFilterFrequency(e.target.value)}
                         className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"

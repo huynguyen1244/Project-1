@@ -13,14 +13,14 @@ interface CurrencyInputProps extends Omit<React.InputHTMLAttributes<HTMLInputEle
 // Format số với khoảng cách mỗi 3 chữ số
 const formatNumber = (value: string): string => {
     // Loại bỏ tất cả ký tự không phải số
-    const numericValue = value.replace(/\D/g, '');
+    const numericValue = value.replaceAll(/\D/g, '');
     // Thêm khoảng cách mỗi 3 chữ số từ phải sang trái
     return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 };
 
 // Loại bỏ format để lấy số thuần
 const parseNumber = (value: string): string => {
-    return value.replace(/\s/g, '');
+    return value.replaceAll(/\s/g, '');
 };
 
 const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
