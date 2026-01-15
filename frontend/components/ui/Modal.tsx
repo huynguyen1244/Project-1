@@ -42,17 +42,11 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            <button
+                type="button"
+                className="absolute inset-0 w-full h-full bg-black/50 backdrop-blur-sm cursor-default"
                 onClick={onClose}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        onClose();
-                    }
-                }}
-                role="button"
-                tabIndex={0}
-                aria-label="Close modal"
+                aria-label="Đóng"
             />
 
             {/* Modal */}
