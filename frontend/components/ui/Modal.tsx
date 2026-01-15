@@ -4,11 +4,11 @@ import { cn } from '@/lib/utils';
 import { useEffect, useCallback, ReactNode } from 'react';
 
 interface ModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    title?: string;
-    children: ReactNode;
-    size?: 'sm' | 'md' | 'lg' | 'xl';
+    readonly isOpen: boolean;
+    readonly onClose: () => void;
+    readonly title?: string;
+    readonly children: ReactNode;
+    readonly size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 export default function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {

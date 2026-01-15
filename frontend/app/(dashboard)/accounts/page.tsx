@@ -80,7 +80,7 @@ export default function AccountsPage() {
         if (!formData.name.trim()) {
             newErrors.name = 'Vui lòng nhập tên tài khoản';
         }
-        if (!formData.balance || isNaN(Number(formData.balance))) {
+        if (!formData.balance || Number.isNaN(Number(formData.balance))) {
             newErrors.balance = 'Vui lòng nhập số dư hợp lệ';
         }
         setErrors(newErrors);

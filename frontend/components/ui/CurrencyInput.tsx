@@ -1,13 +1,13 @@
 'use client';
 
-import { forwardRef, useState, useEffect } from 'react';
+import { forwardRef, useState, useEffect, useId } from 'react';
 import { cn } from '@/lib/utils';
 
 interface CurrencyInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
-    label?: string;
-    error?: string;
-    value: string;
-    onChange: (value: string) => void;
+    readonly label?: string;
+    readonly error?: string;
+    readonly value: string;
+    readonly onChange: (value: string) => void;
 }
 
 // Format số với khoảng cách mỗi 3 chữ số
@@ -24,7 +24,9 @@ const parseNumber = (value: string): string => {
 };
 
 const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
-    ({ className, label, error, value, onChange, ...props }, ref) => {
+    ({ className, label, error, value, onChange, id: providedId, ...props }, ref) => {
+        const reactId = useId();
+        const id = providedId ?? reactId;
         const [displayValue, setDisplayValue] = useState(formatNumber(value));
 
         useEffect(() => {
@@ -45,13 +47,14 @@ const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
         return (
             <div className="space-y-1.5">
                 {label && (
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         {label}
                     </label>
                 )}
                 <div className="relative">
                     <input
                         ref={ref}
+                        id={id}
                         type="text"
                         inputMode="numeric"
                         value={displayValue}

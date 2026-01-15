@@ -105,7 +105,7 @@ export default function RecurringTransactionsPage() {
         const newErrors: Record<string, string> = {};
         if (!formData.accountId) newErrors.accountId = 'Vui lòng chọn tài khoản';
         if (!formData.categoryId) newErrors.categoryId = 'Vui lòng chọn danh mục';
-        if (!formData.amount || isNaN(Number(formData.amount)) || Number(formData.amount) <= 0) {
+        if (!formData.amount || Number.isNaN(Number(formData.amount)) || Number(formData.amount) <= 0) {
             newErrors.amount = 'Vui lòng nhập số tiền hợp lệ';
         }
         if (!formData.nextDate) newErrors.nextDate = 'Vui lòng chọn ngày tiếp theo';

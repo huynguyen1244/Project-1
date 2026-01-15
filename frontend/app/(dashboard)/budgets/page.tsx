@@ -86,7 +86,7 @@ export default function BudgetsPage() {
     const validate = () => {
         const newErrors: Record<string, string> = {};
         if (!formData.categoryId) newErrors.categoryId = 'Vui lòng chọn danh mục';
-        if (!formData.amount || isNaN(Number(formData.amount)) || Number(formData.amount) <= 0) {
+        if (!formData.amount || Number.isNaN(Number(formData.amount)) || Number(formData.amount) <= 0) {
             newErrors.amount = 'Vui lòng nhập ngân sách hợp lệ';
         }
         if (!formData.startDate) newErrors.startDate = 'Vui lòng chọn ngày bắt đầu';

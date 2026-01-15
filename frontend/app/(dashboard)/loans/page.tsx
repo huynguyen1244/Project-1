@@ -84,7 +84,7 @@ export default function LoansPage() {
 
     const validate = () => {
         const newErrors: Record<string, string> = {};
-        if (!formData.principal || isNaN(Number(formData.principal)) || Number(formData.principal) <= 0) {
+        if (!formData.principal || Number.isNaN(Number(formData.principal)) || Number(formData.principal) <= 0) {
             newErrors.principal = 'Vui lòng nhập số tiền vay hợp lệ';
         }
         setErrors(newErrors);

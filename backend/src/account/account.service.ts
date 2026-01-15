@@ -5,7 +5,7 @@ import { UpdateAccountDto } from './dto/update-account.dto';
 
 @Injectable()
 export class AccountService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   // Tạo account mới
   async create(userId: number, dto: CreateAccountDto) {

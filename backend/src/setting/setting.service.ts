@@ -5,7 +5,7 @@ import { UpdateSettingDto } from './dto/update-setting.dto';
 
 @Injectable()
 export class SettingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   // Tạo setting mới
   async create(userId: number, dto: CreateSettingDto) {

@@ -14,7 +14,7 @@ import { UpdateRecurringTransactionDto } from './dto/update-recurring-transactio
 export class RecurringTransactionService {
   private readonly logger = new Logger(RecurringTransactionService.name);
 
-  constructor(private prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) { }
 
   // Kiểm tra account thuộc user
   private async verifyAccountOwnership(accountId: number, userId: number) {

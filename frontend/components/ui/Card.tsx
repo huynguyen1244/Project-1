@@ -1,8 +1,8 @@
 import { cn } from '@/lib/utils';
 import { HTMLAttributes, forwardRef } from 'react';
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
-    variant?: 'default' | 'glass' | 'gradient';
+interface CardProps extends Readonly<HTMLAttributes<HTMLDivElement>> {
+    readonly variant?: 'default' | 'glass' | 'gradient';
 }
 
 const Card = forwardRef<HTMLDivElement, CardProps>(

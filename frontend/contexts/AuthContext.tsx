@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import api from '@/lib/api';
 
@@ -17,15 +17,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const PUBLIC_PATHS = ['/login', '/register'];
+const PUBLIC_PATHS = new Set(['/login', '/register']);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { readonly children: ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const isPublicPath = PUBLIC_PATHS.includes(pathname);
+    const isPublicPath = PUBLIC_PATHS.has(pathname);
 
     const logout = useCallback(() => {
         localStorage.removeItem('accessToken');
@@ -96,20 +96,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         };
 
-        initAuth();
+        void initAuth();
     }, [isPublicPath, router]);
 
+    const contextValue = useMemo(() => ({
+        user,
+        setUser,
+        isLoading,
+        isAuthenticated: !!user,
+        login,
+        logout,
+    }), [user, isLoading, login, logout]);
+
     return (
-        <AuthContext.Provider
-            value={{
-                user,
-                setUser,
-                isLoading,
-                isAuthenticated: !!user,
-                login,
-                logout,
-            }}
-        >
+        <AuthContext.Provider value={contextValue}>
             {children}
         </AuthContext.Provider>
     );

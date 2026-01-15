@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode, useMemo } from 'react';
 import { X, CheckCircle, XCircle, AlertCircle, Info } from 'lucide-react';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -30,7 +30,7 @@ export function useToast() {
 }
 
 interface ToastProviderProps {
-    children: ReactNode;
+    readonly children: ReactNode;
 }
 
 export function ToastProvider({ children }: ToastProviderProps) {
@@ -55,8 +55,16 @@ export function ToastProvider({ children }: ToastProviderProps) {
     const warning = useCallback((message: string) => showToast(message, 'warning'), [showToast]);
     const info = useCallback((message: string) => showToast(message, 'info'), [showToast]);
 
+    const contextValue = useMemo(() => ({
+        showToast,
+        success,
+        error,
+        warning,
+        info
+    }), [showToast, success, error, warning, info]);
+
     return (
-        <ToastContext.Provider value={{ showToast, success, error, warning, info }}>
+        <ToastContext.Provider value={contextValue}>
             {children}
             <ToastContainer toasts={toasts} onRemove={removeToast} />
         </ToastContext.Provider>
@@ -64,8 +72,8 @@ export function ToastProvider({ children }: ToastProviderProps) {
 }
 
 interface ToastContainerProps {
-    toasts: Toast[];
-    onRemove: (id: string) => void;
+    readonly toasts: Toast[];
+    readonly onRemove: (id: string) => void;
 }
 
 function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
@@ -81,8 +89,8 @@ function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
 }
 
 interface ToastItemProps {
-    toast: Toast;
-    onRemove: (id: string) => void;
+    readonly toast: Toast;
+    readonly onRemove: (id: string) => void;
 }
 
 function ToastItem({ toast, onRemove }: ToastItemProps) {

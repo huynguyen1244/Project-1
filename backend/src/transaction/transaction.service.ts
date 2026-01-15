@@ -12,7 +12,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class TransactionService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) { }
 
   // Kiểm tra account thuộc user
   private async verifyAccountOwnership(accountId: number, userId: number) {
@@ -223,10 +223,7 @@ export class TransactionService {
   async update(id: number, userId: number, dto: UpdateTransactionDto) {
     return await this.prisma.$transaction(async (tx) => {
       const transaction = await tx.transaction.findFirst({
-        where: {
-          id,
-          account: { userId },
-        },
+        where: { id, account: { userId } },
         include: { category: true, account: true },
       });
 
@@ -234,78 +231,53 @@ export class TransactionService {
         throw new NotFoundException(`Transaction id ${id} không tồn tại`);
       }
 
-      // Lấy thông tin tài khoản mới (nếu đổi account)
-      let targetAccount = transaction.account;
+      const targetAccount = await this.getUpdatedTargetAccount(
+        tx,
+        userId,
+        dto.accountId,
+        transaction,
+      );
 
-      // Nếu đổi account, kiểm tra quyền và lấy thông tin account mới
-      if (dto.accountId && dto.accountId !== transaction.accountId) {
-        const account = await tx.account.findFirst({
-          where: { id: dto.accountId, userId },
-        });
-        if (!account) {
-          throw new ForbiddenException(
-            'Bạn không có quyền truy cập account này',
-          );
-        }
-        targetAccount = account;
-      }
-
-      // Tính toán biến động số dư
       const oldAmount = Number(transaction.amount);
       const newAmount =
         dto.amount !== undefined ? Number(dto.amount) : oldAmount;
       const oldCategoryType = transaction.category.type;
-      let newCategoryType = oldCategoryType;
+      const newCategoryType = await this.getUpdatedCategoryType(
+        tx,
+        dto.categoryId,
+        transaction,
+      );
 
-      if (dto.categoryId && dto.categoryId !== transaction.categoryId) {
-        const category = await tx.category.findUnique({
-          where: { id: dto.categoryId },
-        });
-        newCategoryType = category?.type || 'EXPENSE';
-      }
+      const balanceAfterRevert = this.calculateBalanceAfterRevert(
+        transaction,
+        targetAccount,
+        oldAmount,
+        oldCategoryType,
+        dto.accountId,
+      );
 
-      // Tính số dư sau khi hoàn lại giao dịch cũ
-      let balanceAfterRevert = Number(transaction.account.balance);
-      if (oldCategoryType === 'INCOME') {
-        balanceAfterRevert -= oldAmount; // Hoàn lại thu nhập = trừ đi
-      } else {
-        balanceAfterRevert += oldAmount; // Hoàn lại chi tiêu = cộng lại
-      }
+      const finalBalance = this.calculateFinalBalance(
+        balanceAfterRevert,
+        newAmount,
+        newCategoryType,
+      );
 
-      // Nếu đổi tài khoản, số dư tài khoản mới không bị ảnh hưởng bởi giao dịch cũ
-      if (dto.accountId && dto.accountId !== transaction.accountId) {
-        balanceAfterRevert = Number(targetAccount.balance);
-      }
+      this.validateNewBalance(
+        finalBalance,
+        targetAccount,
+        transaction,
+        dto,
+        balanceAfterRevert,
+      );
 
-      // Tính số dư sau khi áp dụng giao dịch mới
-      let finalBalance = balanceAfterRevert;
-      if (newCategoryType === 'INCOME') {
-        finalBalance += newAmount; // Thu nhập = cộng tiền
-      } else {
-        finalBalance -= newAmount; // Chi tiêu = trừ tiền
-      }
-
-      // Kiểm tra nếu số dư âm thì từ chối
-      if (finalBalance < 0) {
-        const accountName = targetAccount.name;
-        const currentBalance =
-          dto.accountId && dto.accountId !== transaction.accountId
-            ? Number(targetAccount.balance)
-            : balanceAfterRevert;
-        throw new BadRequestException(
-          `Không thể cập nhật giao dịch. Số dư tài khoản "${accountName}" sau khi cập nhật sẽ bị âm. Số dư hiện tại: ${currentBalance.toLocaleString('vi-VN')} VND`,
-        );
-      }
-
-      // Cập nhật số dư cũ (hoàn lại)
-      await tx.account.update({
-        where: { id: transaction.accountId },
-        data: {
-          balance: {
-            increment: oldCategoryType === 'INCOME' ? -oldAmount : oldAmount,
-          },
-        },
-      });
+      // Hoàn lại số dư cũ
+      await this.updateBalance(
+        tx,
+        transaction.accountId,
+        oldAmount,
+        oldCategoryType,
+        true,
+      );
 
       const updateData: Prisma.TransactionUpdateInput = { ...dto };
       if (dto.executionDate) {
@@ -315,26 +287,117 @@ export class TransactionService {
       const updatedTransaction = await tx.transaction.update({
         where: { id },
         data: updateData,
-        include: {
-          account: true,
-          category: true,
-        },
+        include: { account: true, category: true },
       });
 
-      // Cập nhật số dư mới
-      await tx.account.update({
-        where: { id: updatedTransaction.accountId },
-        data: {
-          balance: {
-            increment: newCategoryType === 'INCOME' ? newAmount : -newAmount,
-          },
-        },
-      });
+      // Áp dụng số dư mới
+      await this.updateBalance(
+        tx,
+        updatedTransaction.accountId,
+        newAmount,
+        newCategoryType,
+        false,
+      );
 
-      // Kiểm tra ngân sách (Budget)
       await this.checkBudgetUsage(tx, userId, updatedTransaction.categoryId);
 
       return updatedTransaction;
+    });
+  }
+
+  private async getUpdatedTargetAccount(
+    tx: Prisma.TransactionClient,
+    userId: number,
+    dtoAccountId?: number,
+    transaction?: any,
+  ) {
+    if (dtoAccountId && dtoAccountId !== transaction.accountId) {
+      const account = await tx.account.findFirst({
+        where: { id: dtoAccountId, userId },
+      });
+      if (!account) {
+        throw new ForbiddenException('Bạn không có quyền truy cập account này');
+      }
+      return account;
+    }
+    return transaction.account;
+  }
+
+  private async getUpdatedCategoryType(
+    tx: Prisma.TransactionClient,
+    dtoCategoryId?: number,
+    transaction?: any,
+  ) {
+    if (dtoCategoryId && dtoCategoryId !== transaction.categoryId) {
+      const category = await tx.category.findUnique({
+        where: { id: dtoCategoryId },
+      });
+      return category?.type || 'EXPENSE';
+    }
+    return transaction.category.type;
+  }
+
+  private calculateBalanceAfterRevert(
+    transaction: any,
+    targetAccount: any,
+    oldAmount: number,
+    oldCategoryType: string,
+    dtoAccountId?: number,
+  ) {
+    if (dtoAccountId && dtoAccountId !== transaction.accountId) {
+      return Number(targetAccount.balance);
+    }
+
+    const currentBalance = Number(transaction.account.balance);
+    return oldCategoryType === 'INCOME'
+      ? currentBalance - oldAmount
+      : currentBalance + oldAmount;
+  }
+
+  private calculateFinalBalance(
+    balanceAfterRevert: number,
+    newAmount: number,
+    newCategoryType: string,
+  ) {
+    return newCategoryType === 'INCOME'
+      ? balanceAfterRevert + newAmount
+      : balanceAfterRevert - newAmount;
+  }
+
+  private validateNewBalance(
+    finalBalance: number,
+    targetAccount: any,
+    transaction: any,
+    dto: UpdateTransactionDto,
+    balanceAfterRevert: number,
+  ) {
+    if (finalBalance < 0) {
+      const currentBalance =
+        dto.accountId && dto.accountId !== transaction.accountId
+          ? Number(targetAccount.balance)
+          : balanceAfterRevert;
+
+      throw new BadRequestException(
+        `Không thể cập nhật giao dịch. Số dư tài khoản "${targetAccount.name}" sau khi cập nhật sẽ bị âm. Số dư hiện tại: ${currentBalance.toLocaleString('vi-VN')} VND`,
+      );
+    }
+  }
+
+  private async updateBalance(
+    tx: Prisma.TransactionClient,
+    accountId: number,
+    amount: number,
+    type: string,
+    isRevert: boolean,
+  ) {
+    const increment = type === 'INCOME' ? amount : -amount;
+    await tx.account.update({
+      where: { id: accountId },
+      data: {
+        balance: {
+          increment: isRevert ? -increment : increment,
+        },
+      },
     });
   }
 
