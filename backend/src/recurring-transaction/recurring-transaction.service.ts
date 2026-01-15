@@ -5,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { CreateRecurringTransactionDto } from './dto/create-recurring-transaction.dto';
 import { UpdateRecurringTransactionDto } from './dto/update-recurring-transaction.dto';
@@ -107,7 +108,7 @@ export class RecurringTransactionService {
       await this.verifyAccountOwnership(dto.accountId, userId);
     }
 
-    const updateData: any = { ...dto };
+    const updateData: Prisma.RecurringTransactionUpdateInput = { ...dto };
     if (dto.nextDate) updateData.nextDate = new Date(dto.nextDate);
     if (dto.endDate) updateData.endDate = new Date(dto.endDate);
 
@@ -211,15 +212,27 @@ export class RecurringTransactionService {
           this.logger.log(
             `Processed recurring transaction ${recurring.id}: ${isIncome ? '+' : '-'}${amount} for account ${recurring.accountId}`,
           );
-        } catch (error) {
+
+          // Tạo thông báo
+          await this.prisma.notification.create({
+            data: {
+              userId: recurring.account.userId,
+              title: 'Giao dịch định kỳ đã xử lý',
+              message: `Đã tự động xử lý giao dịch "${recurring.description || recurring.category?.name}" với số tiền ${amount.toLocaleString('vi-VN')} VND.`,
+              notifyAt: now,
+            },
+          });
+        } catch (error: unknown) {
+          const err = error as Error;
           this.logger.error(
-            `Failed to process recurring transaction ${recurring.id}: ${error.message}`,
+            `Failed to process recurring transaction ${recurring.id}: ${err.message}`,
           );
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const err = error as Error;
       this.logger.error(
-        `Failed to process recurring transactions: ${error.message} `,
+        `Failed to process recurring transactions: ${err.message} `,
       );
     }
   }

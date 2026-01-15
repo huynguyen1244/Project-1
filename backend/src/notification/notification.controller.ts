@@ -19,7 +19,7 @@ import { UserId } from '../common/decorators/user.decorator';
 @Controller('notification')
 @UseGuards(AuthGuard('jwt'))
 export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) {}
+  constructor(private readonly notificationService: NotificationService) { }
 
   @Post()
   async create(@UserId() userId: number, @Body() dto: CreateNotificationDto) {
@@ -35,6 +35,11 @@ export class NotificationController {
       userId,
       unreadOnly === 'true',
     );
+  }
+
+  @Patch('mark-all-read')
+  async markAllAsRead(@UserId() userId: number) {
+    return await this.notificationService.markAllAsRead(userId);
   }
 
   @Get(':id')
@@ -60,11 +65,6 @@ export class NotificationController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return await this.notificationService.markAsRead(id, userId);
-  }
-
-  @Patch('mark-all-read')
-  async markAllAsRead(@UserId() userId: number) {
-    return await this.notificationService.markAllAsRead(userId);
   }
 
   @Delete(':id')

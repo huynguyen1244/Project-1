@@ -36,6 +36,8 @@ export default function TransactionsPage() {
     const [filterType, setFilterType] = useState<string>('ALL');
     const [filterCategory, setFilterCategory] = useState<string>('ALL');
     const [filterAccount, setFilterAccount] = useState<string>('ALL');
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
 
     useEffect(() => {
         loadData();
@@ -151,6 +153,38 @@ export default function TransactionsPage() {
         }
     };
 
+    const exportToCSV = () => {
+        const headers = ['ID', 'Ngày', 'Danh mục', 'Loại', 'Mô tả', 'Tài khoản', 'Số tiền'];
+        const rows = filteredTransactions.map(t => {
+            const category = getCategoryById(t.categoryId);
+            const account = getAccountById(t.accountId);
+            return [
+                t.id,
+                formatDate(t.executionDate),
+                category?.name || 'N/A',
+                category?.type === 'INCOME' ? 'Thu nhập' : 'Chi tiêu',
+                t.description || '',
+                account?.name || 'N/A',
+                t.amount
+            ];
+        });
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.join(','))
+        ].join('\n');
+
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `giao-dich-${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const getCategoryById = (id: number) => categories.find(c => c.id === id);
     const getAccountById = (id: number) => accounts.find(a => a.id === id);
 
@@ -169,6 +203,9 @@ export default function TransactionsPage() {
         if (filterType !== 'ALL' && category?.type !== filterType) return false;
         if (filterCategory !== 'ALL' && String(t.categoryId) !== filterCategory) return false;
         if (filterAccount !== 'ALL' && String(t.accountId) !== filterAccount) return false;
+
+        if (startDate && new Date(t.executionDate) < new Date(startDate)) return false;
+        if (endDate && new Date(t.executionDate) > new Date(endDate)) return false;
 
         return true;
     });
@@ -201,12 +238,20 @@ export default function TransactionsPage() {
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Quản lý Thu Chi</h1>
                     <p className="mt-1 text-gray-500 dark:text-gray-400">Theo dõi các giao dịch tài chính của bạn</p>
                 </div>
-                <Button onClick={() => openModal()}>
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Thêm giao dịch
-                </Button>
+                <div className="flex items-center gap-3">
+                    <Button variant="outline" onClick={exportToCSV} disabled={filteredTransactions.length === 0}>
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Xuất CSV
+                    </Button>
+                    <Button onClick={() => openModal()}>
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Thêm giao dịch
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}
@@ -287,12 +332,32 @@ export default function TransactionsPage() {
                             ))}
                         </select>
                     </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Từ:</span>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Đến:</span>
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                        />
+                    </div>
                     <button
                         onClick={() => {
                             setSearchQuery('');
                             setFilterType('ALL');
                             setFilterCategory('ALL');
                             setFilterAccount('ALL');
+                            setStartDate('');
+                            setEndDate('');
                         }}
                         className="text-sm text-indigo-600 hover:text-indigo-500 font-medium"
                     >

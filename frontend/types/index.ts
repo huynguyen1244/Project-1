@@ -114,6 +114,18 @@ export interface AuthResponse {
   user: User;
 }
 
+// Notification types
+export interface Notification {
+  id: number;
+  userId: number;
+  title: string;
+  message: string;
+  read: boolean;
+  notifyAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // API Response types
 export interface ApiResponse<T> {
   data: T;

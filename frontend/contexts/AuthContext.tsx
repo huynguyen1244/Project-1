@@ -4,14 +4,11 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { useRouter, usePathname } from 'next/navigation';
 import api from '@/lib/api';
 
-interface User {
-    id: number;
-    username: string;
-    email: string;
-}
+import { User } from '@/types';
 
 interface AuthContextType {
     user: User | null;
+    setUser: (user: User | null) => void;
     isLoading: boolean;
     isAuthenticated: boolean;
     login: (accessToken: string, refreshToken: string, userData: User) => void;
@@ -106,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         <AuthContext.Provider
             value={{
                 user,
+                setUser,
                 isLoading,
                 isAuthenticated: !!user,
                 login,
