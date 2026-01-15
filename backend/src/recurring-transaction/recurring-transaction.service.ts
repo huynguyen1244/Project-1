@@ -176,6 +176,36 @@ export class RecurringTransactionService {
           // Xác định loại giao dịch (thu nhập hay chi tiêu)
           const isIncome = recurring.category?.type === 'INCOME';
           const amount = Number(recurring.amount);
+          const currentBalance = Number(recurring.account.balance);
+
+          // Kiểm tra số dư nếu là chi tiêu
+          if (!isIncome && currentBalance < amount) {
+            this.logger.warn(
+              `Skipping recurring transaction ${recurring.id}: Insufficient balance in account ${recurring.accountId} (${currentBalance} < ${amount})`,
+            );
+
+            // Tạo thông báo lỗi
+            await this.prisma.notification.create({
+              data: {
+                userId: recurring.account.userId,
+                title: 'Giao dịch định kỳ thất bại',
+                message: `Giao dịch định kỳ "${recurring.description || recurring.category?.name}" trị giá ${amount.toLocaleString('vi-VN')} VND không thể thực hiện do số dư tài khoản không đủ.`,
+                notifyAt: now,
+              },
+            });
+
+            // Vẫn cập nhật nextDate để không bị lặp lại lỗi mỗi phút
+            const nextDate = this.calculateNextDate(
+              recurring.nextDate,
+              recurring.frequency,
+            );
+            await this.prisma.recurringTransaction.update({
+              where: { id: recurring.id },
+              data: { nextDate },
+            });
+
+            continue;
+          }
 
           // Tạo transaction mới
           await this.prisma.transaction.create({
@@ -189,7 +219,6 @@ export class RecurringTransactionService {
           });
 
           // Cập nhật số dư tài khoản
-          // Thu nhập: cộng tiền, Chi tiêu: trừ tiền
           await this.prisma.account.update({
             where: { id: recurring.accountId },
             data: {
